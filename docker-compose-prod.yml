@@ -1,0 +1,51 @@
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - 1339:80 
+    volumes:
+      - static_volume:/home/app/code/static
+    depends_on:
+      - web 
+    restart: "on-failure" 
+
+  web:
+    build: .
+    command: sh -c "python manage.py makemigrations &&
+                    python manage.py migrate &&
+                    gunicorn cakes.wsgi:application --bind 0.0.0.0:${APP_PORT}"
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    volumes:
+      - .:/code
+      - static_volume:/home/app/code/static
+    env_file:
+      - .env
+    expose: 
+      - ${APP_PORT}
+    image: cakes_app
+    restart: "on-failure"
+    depends_on:
+      - db
+      - redis
+
+  redis:
+    image: redis:3.2.0
+    volumes:
+      - 'redisdata:/data'
+    expose:
+      - "6379"
+    restart: always
+
+  db:
+    image: postgres:14
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
+    restart: "on-failure"
+
+volumes:
+  postgres_data:
+  redisdata:
+  static_volume:
