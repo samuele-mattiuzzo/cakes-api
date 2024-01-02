@@ -26,16 +26,16 @@ class Cake(OrderedModel):
 
     @property
     def yumFactor(self):
-        rating_count = self.yumrating_set.count()
-        if rating_count == 0:
-            return 1
+        yum_ratings = self.yumrating_set.all()
+        if len(yum_ratings) == 0:
+            return 1  # default
 
-        rating = self.yumrating_set.aggregate(
-            Sum('rating')
-        )
+        sum_ratings = sum([
+            yum.rating for yum in yum_ratings
+        ])
 
         return round(
-            rating['rating__sum'] / rating_count
+            sum_ratings / len(yum_ratings)
         )
 
 
